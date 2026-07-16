@@ -21,3 +21,11 @@ export interface GenerateExperienceDescriptionBody {
   techStack: string[];
   jobRole: string;
 }
+
+export interface ImproveContentBody {
+  content: string;
+}
+
+export interface AtsScoreBody {
+  resumeText: string;
+}
