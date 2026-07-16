@@ -27,6 +27,17 @@ const resumeSchema = new mongoose.Schema<iResume>(
       },
       default: {},
     },
+    education: {
+      type: [
+        {
+          institute: String,
+          degree: String,
+          startDate: String,
+          endDate: String,
+        },
+      ],
+      default: [],
+    },
     workExperience: {
       type: [
         {
