@@ -17,7 +17,7 @@ export async function GET(
 
     const resume = await ResumeModel.findOne({
       _id: resumeId,
-      user_id: user.userId,
+      // user_id: user.userId,
     });
 
     if (!resume)
@@ -68,7 +68,7 @@ export async function PATCH(
 
     const { resumeId } = await params;
 
-    const updatedResume = await ResumeModel.findOneAndUpdate(
+    const updatedResume = await ResumeModel.findByIdAndUpdate(
       {
         _id: resumeId,
         user_id: user.userId,
