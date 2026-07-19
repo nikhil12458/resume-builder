@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Plus, Trash2, Sparkles } from "lucide-react";
@@ -63,13 +63,19 @@ export default function ExperienceStep({ resumeId, onNext, onBack }: Props) {
     fetchResume();
   }, []);
 
+  const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
+
   const fetchResume = async () => {
     try {
       const { data } = await axios.get(`/api/resume/${resumeId}`);
 
-      if (data.resume.experience?.length) {
+      if (data.data?.workExperience?.length) {
+        const mappedExperience = data.data.workExperience.map((exp: any) => ({
+          ...exp,
+          role: exp.position || "",
+        }));
         reset({
-          experience: data.resume.experience,
+          experience: mappedExperience,
         });
       }
     } catch (error) {
@@ -79,30 +85,40 @@ export default function ExperienceStep({ resumeId, onNext, onBack }: Props) {
 
   const generateDescription = async (index: number) => {
     try {
+      setGeneratingIndex(index);
       const exp = watch(`experience.${index}`);
 
       const { data: resumeData } = await axios.get(`/api/resume/${resumeId}`);
 
-      const resume = resumeData.resume;
+      const resume = resumeData.data;
 
       const { data } = await axios.post("/api/ai/generate-experience", {
-        jobRole: exp.role,
-        experienceLevel: resume.experienceLevel,
+        jobRole: exp.role || resume?.jobTitle || "Software Engineer",
+        experienceLevel: resume?.workExperience?.length ? "Experienced" : "Fresher",
+        techStack: resume?.skills?.join(", ") || "various technologies",
+        yearsOfExperience: resume?.workExperience?.length || 1,
       });
 
-      setValue(`experience.${index}.description`, data.description);
+      setValue(`experience.${index}.description`, data.data.workExperienceDescription);
     } catch (error) {
       console.log(error);
+    } finally {
+      setGeneratingIndex(null);
     }
   };
 
   const onSubmit = async (values: FormValues) => {
     try {
+      const mappedExperience = values.experience.map((exp: any) => ({
+        ...exp,
+        position: exp.role,
+      }));
+
       await axios.patch(`/api/resume/${resumeId}`, {
-        experience: values.experience,
+        workExperience: mappedExperience,
       });
 
-      router.push(`/resume/${resumeId}/preview`);
+      onNext();
     } catch (error) {
       console.log(error);
     }
@@ -115,13 +131,13 @@ export default function ExperienceStep({ resumeId, onNext, onBack }: Props) {
 
         <div className="mb-8">
           <div className="flex justify-between">
-            <span>Step 5 of 8</span>
+            <span>Step 5 of 6</span>
 
-            <span>62%</span>
+            <span>83%</span>
           </div>
 
           <div className="h-2 bg-slate-200 rounded-full mt-2">
-            <div className="h-full w-[62%] bg-violet-600 rounded-full" />
+            <div className="h-full w-[83%] bg-violet-600 rounded-full" />
           </div>
         </div>
 
@@ -221,10 +237,11 @@ export default function ExperienceStep({ resumeId, onNext, onBack }: Props) {
                     <button
                       type="button"
                       onClick={() => generateDescription(index)}
-                      className="bg-violet-100 text-violet-700 px-4 py-2 rounded-xl flex items-center gap-2"
+                      disabled={generatingIndex === index}
+                      className="bg-violet-100 text-violet-700 px-4 py-2 rounded-xl flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       <Sparkles size={18} />
-                      Generate Description
+                      {generatingIndex === index ? "Generating..." : "Generate Description"}
                     </button>
                   </div>
 

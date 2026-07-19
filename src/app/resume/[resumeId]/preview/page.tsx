@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Eye, Download, Sparkles } from "lucide-react";
-import { useParams } from "next/navigation";
+import { Eye, Download, Sparkles, X } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 
 interface Resume {
   title: string;
@@ -50,8 +50,12 @@ export default function ResumePreviewPage() {
   const [resume, setResume] = useState<Resume | null>(null);
 
   const [loading, setLoading] = useState(true);
+  const [atsLoading, setAtsLoading] = useState(false);
+  const [showAtsModal, setShowAtsModal] = useState(false);
+  const [atsResult, setAtsResult] = useState<any>(null);
 
   const { resumeId } = useParams();
+  const router = useRouter();
 
   useEffect(() => {
     fetchResume();
@@ -71,6 +75,29 @@ export default function ResumePreviewPage() {
     }
   };
 
+  const handleAtsScore = async () => {
+    try {
+      setAtsLoading(true);
+      setShowAtsModal(true);
+      const resumeText = JSON.stringify(resume);
+      const { data } = await axios.post("/api/ai/ats-score", { resumeText });
+      
+      let scoreData = data.data.AtsScore;
+      if (typeof scoreData === "string") {
+        try {
+          scoreData = JSON.parse(scoreData);
+        } catch (e) {
+          console.log("Failed to parse ATS score JSON");
+        }
+      }
+      setAtsResult(scoreData);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setAtsLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex justify-center items-center">
@@ -87,22 +114,31 @@ export default function ResumePreviewPage() {
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Actions */}
 
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 print:hidden">
             <div className="bg-white rounded-3xl p-6 border sticky top-6">
               <h2 className="font-bold text-xl mb-6">Resume Actions</h2>
 
               <div className="space-y-3">
-                <button className="w-full flex items-center gap-3 bg-violet-600 text-white px-4 py-3 rounded-xl">
+                <button
+                  onClick={handleAtsScore}
+                  className="w-full flex items-center gap-3 bg-violet-600 hover:bg-violet-700 text-white px-4 py-3 rounded-xl transition"
+                >
                   <Sparkles size={18} />
                   ATS Score
                 </button>
 
-                <button className="w-full flex items-center gap-3 border px-4 py-3 rounded-xl">
+                <button
+                  onClick={() => window.print()}
+                  className="w-full flex items-center gap-3 border px-4 py-3 rounded-xl hover:bg-slate-50 transition"
+                >
                   <Download size={18} />
                   Download PDF
                 </button>
 
-                <button className="w-full flex items-center gap-3 border px-4 py-3 rounded-xl">
+                <button
+                  onClick={() => router.push(`/resume/${resumeId}`)}
+                  className="w-full flex items-center gap-3 border px-4 py-3 rounded-xl hover:bg-slate-50 transition"
+                >
                   <Eye size={18} />
                   Edit Resume
                 </button>
@@ -252,6 +288,97 @@ export default function ResumePreviewPage() {
           </div>
         </div>
       </div>
+
+      {/* ATS Modal */}
+      {showAtsModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-8 relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowAtsModal(false)}
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600"
+            >
+              <X size={24} />
+            </button>
+
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Sparkles className="text-violet-600" />
+              ATS Evaluation
+            </h2>
+
+            {atsLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-12 h-12 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin mb-4" />
+                <p className="text-slate-500">Analyzing your resume...</p>
+              </div>
+            ) : atsResult ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between bg-violet-50 p-6 rounded-2xl">
+                  <div>
+                    <h3 className="font-semibold text-lg text-violet-900">Overall Score</h3>
+                    <p className="text-violet-700 text-sm mt-1">Based on industry standards</p>
+                  </div>
+                  <div className="text-4xl font-bold text-violet-600">
+                    {atsResult.atsScore}/100
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Summary</h4>
+                  <p className="text-slate-600">{atsResult.summary}</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold text-green-700 mb-3 flex items-center gap-2">
+                      Strengths
+                    </h4>
+                    <ul className="space-y-2">
+                      {atsResult.strengths?.map((item: string, i: number) => (
+                        <li key={i} className="flex gap-2 text-slate-600 text-sm">
+                          <span className="text-green-500">•</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-orange-700 mb-3 flex items-center gap-2">
+                      Areas to Improve
+                    </h4>
+                    <ul className="space-y-2">
+                      {atsResult.improvements?.map((item: string, i: number) => (
+                        <li key={i} className="flex gap-2 text-slate-600 text-sm">
+                          <span className="text-orange-500">•</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-blue-700 mb-3 flex items-center gap-2">
+                    Recommendations
+                  </h4>
+                  <ul className="space-y-2">
+                    {atsResult.recommendations?.map((item: string, i: number) => (
+                      <li key={i} className="flex gap-2 text-slate-600 text-sm">
+                        <span className="text-blue-500">•</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="py-12 text-center text-slate-500">
+                Failed to load ATS analysis.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

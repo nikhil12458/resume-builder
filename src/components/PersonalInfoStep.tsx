@@ -36,7 +36,7 @@ export default function PersonalInfoStep({ resumeId, onNext }: Props) {
     try {
       const { data } = await axios.get(`/api/resume/${resumeId}`);
 
-      reset(data.resume.personalInfo || {});
+      reset(data.data?.personalInfo || {});
     } catch (error) {
       console.log(error);
     }
@@ -59,14 +59,13 @@ export default function PersonalInfoStep({ resumeId, onNext }: Props) {
       <div className="max-w-4xl mx-auto">
         {/* Progress */}
         <div className="mb-8">
-          <div className="flex justify-between mb-2">
-            <span className="font-medium">Step 1 of 8</span>
-
-            <span className="text-slate-500">12%</span>
+          <div className="flex justify-between">
+            <span>Step 1 of 6</span>
+            <span>17%</span>
           </div>
 
-          <div className="h-2 bg-slate-200 rounded-full">
-            <div className="h-full w-[12%] bg-violet-600 rounded-full" />
+          <div className="h-2 bg-slate-200 rounded-full mt-2">
+            <div className="h-full w-[17%] bg-violet-600 rounded-full" />
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Plus, Trash2, Sparkles } from "lucide-react";
@@ -56,13 +56,15 @@ export default function ProjectsStep({ resumeId, onNext, onBack }: Props) {
     fetchResume();
   }, []);
 
+  const [generatingIndex, setGeneratingIndex] = useState<number | null>(null);
+
   const fetchResume = async () => {
     try {
       const { data } = await axios.get(`/api/resume/${resumeId}`);
 
-      if (data.resume.projects?.length) {
+      if (data.data?.projects?.length) {
         reset({
-          projects: data.resume.projects.map((project: any) => ({
+          projects: data.data.projects.map((project: any) => ({
             ...project,
             techStack: Array.isArray(project.techStack)
               ? project.techStack.join(", ")
@@ -77,18 +79,18 @@ export default function ProjectsStep({ resumeId, onNext, onBack }: Props) {
 
   const generateDescription = async (index: number) => {
     try {
+      setGeneratingIndex(index);
       const project = watch(`projects.${index}`);
 
       const { data: resumeData } = await axios.get(`/api/resume/${resumeId}`);
-
-      const resume = resumeData.resume;
+      const resume = resumeData.data;
 
       const { data } = await axios.post(
         "/api/ai/generate-project-description",
         {
-          jobTitle: "web developer",
-          experienceLevel: "mid-level",
-          techStack: ["html", "css", "react", "nodejs"],
+          jobTitle: resume.workExperience?.at(-1)?.position || resume.jobTitle || "Software Engineer",
+          experienceLevel: resume.workExperience?.length ? "Experienced" : "Fresher",
+          techStack: project.techStack ? project.techStack.split(",").map((tech: string) => tech.trim()) : [],
         },
       );
       console.log("data we get from project description", data);
@@ -96,6 +98,8 @@ export default function ProjectsStep({ resumeId, onNext, onBack }: Props) {
       setValue(`projects.${index}.description`, data.data.projectDescription);
     } catch (error) {
       console.log(error);
+    } finally {
+      setGeneratingIndex(null);
     }
   };
 
@@ -123,13 +127,13 @@ export default function ProjectsStep({ resumeId, onNext, onBack }: Props) {
 
         <div className="mb-8">
           <div className="flex justify-between mb-2">
-            <span>Step 4 of 8</span>
+            <span>Step 4 of 6</span>
 
-            <span>50%</span>
+            <span>67%</span>
           </div>
 
           <div className="h-2 bg-slate-200 rounded-full">
-            <div className="h-full w-[50%] bg-violet-600 rounded-full" />
+            <div className="h-full w-[67%] bg-violet-600 rounded-full" />
           </div>
         </div>
 
@@ -205,10 +209,11 @@ export default function ProjectsStep({ resumeId, onNext, onBack }: Props) {
                     <button
                       type="button"
                       onClick={() => generateDescription(index)}
-                      className="flex items-center gap-2 bg-violet-100 text-violet-700 px-4 py-2 rounded-xl"
+                      disabled={generatingIndex === index}
+                      className="flex items-center gap-2 bg-violet-100 text-violet-700 px-4 py-2 rounded-xl disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       <Sparkles size={18} />
-                      Generate Description
+                      {generatingIndex === index ? "Generating..." : "Generate Description"}
                     </button>
                   </div>
 

@@ -17,7 +17,7 @@ export async function GET(
 
     const resume = await ResumeModel.findOne({
       _id: resumeId,
-      // user_id: user.userId,
+      user_id: user,
     });
 
     if (!resume)
@@ -71,7 +71,7 @@ export async function PATCH(
     const updatedResume = await ResumeModel.findByIdAndUpdate(
       {
         _id: resumeId,
-        user_id: user.userId,
+        user_id: user,
       },
       {
         $set: body,
@@ -105,6 +105,56 @@ export async function PATCH(
     );
   } catch (error) {
     console.log("error in update resume api", error);
+    return NextResponse.json<ApiResponse>(
+      {
+        success: false,
+        message: "something went wrong",
+      },
+      {
+        status: 500,
+      },
+    );
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ resumeId: string }> },
+) {
+  try {
+    await connectDB();
+
+    const user = await getCurrentUser();
+
+    const { resumeId } = await params;
+
+    const deletedResume = await ResumeModel.findOneAndDelete({
+      _id: resumeId,
+      user_id: user,
+    });
+
+    if (!deletedResume)
+      return NextResponse.json<ApiResponse>(
+        {
+          success: false,
+          message: "resume not found or you don't have permission to delete it",
+        },
+        {
+          status: 404,
+        },
+      );
+
+    return NextResponse.json<ApiResponse>(
+      {
+        success: true,
+        message: "Resume deleted successfully",
+      },
+      {
+        status: 200,
+      },
+    );
+  } catch (error) {
+    console.log("error in delete resume api", error);
     return NextResponse.json<ApiResponse>(
       {
         success: false,

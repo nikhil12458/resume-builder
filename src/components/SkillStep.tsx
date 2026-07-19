@@ -28,7 +28,7 @@ export default function SkillsStep({ resumeId, onNext, onBack }: Props) {
     try {
       const { data } = await axios.get(`/api/resume/${resumeId}/`);
 
-      setSkills(data.resume.skills || []);
+      setSkills(data.data?.skills || []);
     } catch (error) {
       console.log(error);
     }
@@ -55,11 +55,22 @@ export default function SkillsStep({ resumeId, onNext, onBack }: Props) {
 
       console.log("data in resume find", resumeData);
 
-      const resume = resumeData.resume;
+      const resume = resumeData.data;
+
+      const projectSkills = resume.projects?.flatMap(
+        (project: any) => project.techStack,
+      ) || [];
+
+      const currentRole =
+        resume.workExperience?.at(-1)?.position ||
+        resume.jobTitle ||
+        "Software Engineer";
 
       const { data } = await axios.post("/api/ai/generate-skills", {
-        jobTitle: "web developer",
-        experienceLevel: "mid-level",
+        jobTitle: currentRole,
+        experienceLevel: resume.workExperience.length
+          ? "Experienced"
+          : "Fresher",
       });
 
       console.log("bhai ai ne response diya ", data);
@@ -95,13 +106,13 @@ export default function SkillsStep({ resumeId, onNext, onBack }: Props) {
 
         <div className="mb-8">
           <div className="flex justify-between mb-2">
-            <span>Step 3 of 8</span>
+            <span>Step 3 of 6</span>
 
-            <span>37%</span>
+            <span>50%</span>
           </div>
 
           <div className="h-2 bg-slate-200 rounded-full">
-            <div className="h-full w-[37%] bg-violet-600 rounded-full" />
+            <div className="h-full w-[50%] bg-violet-600 rounded-full" />
           </div>
         </div>
 

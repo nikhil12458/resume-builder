@@ -60,9 +60,9 @@ export default function EducationStep({ resumeId, onNext, onBack }: Props) {
     try {
       const { data } = await axios.get(`/api/resume/${resumeId}`);
 
-      if (data.resume?.education && data.resume.education.length > 0) {
+      if (data.data?.education && data.data.education.length > 0) {
         reset({
-          education: data.resume.education,
+          education: data.data.education,
         });
       }
     } catch (error) {
@@ -89,13 +89,13 @@ export default function EducationStep({ resumeId, onNext, onBack }: Props) {
 
         <div className="mb-8">
           <div className="flex justify-between mb-2">
-            <span className="font-medium">Step 2 of 8</span>
+            <span className="font-medium">Step 2 of 6</span>
 
-            <span className="text-slate-500">25%</span>
+            <span className="text-slate-500">33%</span>
           </div>
 
           <div className="h-2 bg-slate-200 rounded-full">
-            <div className="h-full w-[25%] bg-violet-600 rounded-full" />
+            <div className="h-full w-[33%] bg-violet-600 rounded-full" />
           </div>
         </div>
 

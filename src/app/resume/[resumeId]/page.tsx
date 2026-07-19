@@ -7,9 +7,12 @@ import SkillsStep from "@/components/SkillStep";
 import ProjectsStep from "@/components/ProjectSetup";
 import ExperienceStep from "@/components/ExperienceStep";
 import EducationStep from "@/components/EducationStep";
+import SummaryStep from "@/components/SummaryStep";
+import { useRouter } from "next/navigation";
 
 export default function ResumeBuilderPage() {
   const params = useParams();
+  const router = useRouter();
 
   const resumeId = params.resumeId as string;
   console.log("resume id", resumeId);
@@ -55,13 +58,13 @@ export default function ResumeBuilderPage() {
       )}
 
       {/* Step 6 */}
-      {/* Achievements */}
-
-      {/* Step 7 */}
-      {/* Summary */}
-
-      {/* Step 8 */}
-      {/* Preview */}
+      {step === 6 && (
+        <SummaryStep
+          resumeId={resumeId}
+          onBack={() => setStep(5)}
+          onNext={() => router.push(`/resume/${resumeId}/preview`)}
+        />
+      )}
     </>
   );
 }

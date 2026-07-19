@@ -37,11 +37,13 @@ export default function ResumePage() {
     fetchResumes();
   }, []);
 
+  const [resumeToDelete, setResumeToDelete] = useState<string | null>(null);
+
   const fetchResumes = async () => {
     try {
       const data = await getAllResumesApi();
 
-      setResumes(data.resumes || []);
+      setResumes(data.data?.resumes || []);
     } catch (error) {
       console.log(error);
     } finally {
@@ -68,13 +70,17 @@ export default function ResumePage() {
     }
   };
 
-  const handleDelete = async (resumeId: string) => {
+  const handleDelete = async () => {
+    if (!resumeToDelete) return;
+
     try {
-      await deleteResumeApi(resumeId);
+      await deleteResumeApi(resumeToDelete);
 
       fetchResumes();
     } catch (error) {
       console.log(error);
+    } finally {
+      setResumeToDelete(null);
     }
   };
 
@@ -134,19 +140,23 @@ export default function ResumePage() {
                 <div>
                   <h2 className="font-bold text-xl">{resume.title}</h2>
 
-                  <div className="flex items-center gap-2 text-slate-500 mt-2">
-                    <Briefcase size={16} />
-                    {resume.jobTitle}
-                  </div>
+                  {resume.jobTitle && (
+                    <div className="flex items-center gap-2 text-slate-500 mt-2">
+                      <Briefcase size={16} />
+                      {resume.jobTitle}
+                    </div>
+                  )}
 
-                  <span className="inline-block mt-4 bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-sm">
-                    {resume.experienceLevel}
-                  </span>
+                  {resume.experienceLevel && (
+                    <span className="inline-block mt-4 bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-sm">
+                      {resume.experienceLevel}
+                    </span>
+                  )}
                 </div>
 
                 <button
-                  onClick={() => handleDelete(resume._id)}
-                  className="text-red-500"
+                  onClick={() => setResumeToDelete(resume._id)}
+                  className="text-red-500 hover:text-red-600 transition"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -162,6 +172,37 @@ export default function ResumePage() {
           ))}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {resumeToDelete && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-50">
+          <div className="bg-white w-full max-w-md rounded-3xl p-8 text-center">
+            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Trash2 size={24} />
+            </div>
+            
+            <h2 className="text-2xl font-bold mb-2">Delete Resume?</h2>
+            <p className="text-slate-500 mb-8">
+              Are you sure you want to delete this resume? This action cannot be undone.
+            </p>
+
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setResumeToDelete(null)}
+                className="px-6 py-3 border rounded-xl font-medium w-full"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium w-full transition"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
 

@@ -4,39 +4,26 @@ import ResumeModel from "@/models/Resume.model";
 import { ApiResponse } from "@/types/api.types";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
     const userId = await getCurrentUser();
-    const body = await req.json();
 
-    let newResume = await ResumeModel.create({
-      user_id: userId,
-      title: body.title || "",
-      jobTitle: body.jobTitle || "",
-      experienceLevel: body.experienceLevel || "Fresher",
-      summary: "",
-      personalInfo: {},
-      workExperience: [],
-      projects: [],
-      education: [],
-      certifications: [],
-      skills: [],
-    });
+    const resumes = await ResumeModel.find({ user_id: userId }).sort({ createdAt: -1 });
 
     return NextResponse.json<ApiResponse>(
       {
         success: true,
-        message: "resume created successfully",
-        data: newResume,
+        message: "Resumes fetched successfully",
+        data: { resumes },
       },
       {
-        status: 201,
-      },
+        status: 200,
+      }
     );
   } catch (error) {
-    console.log("error in create resume api", error);
+    console.log("error in get all resumes api", error);
     return NextResponse.json<ApiResponse>(
       {
         success: false,
@@ -44,7 +31,7 @@ export async function POST(req: NextRequest) {
       },
       {
         status: 500,
-      },
+      }
     );
   }
 }
