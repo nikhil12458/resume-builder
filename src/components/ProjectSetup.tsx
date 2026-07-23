@@ -88,9 +88,16 @@ export default function ProjectsStep({ resumeId, onNext, onBack }: Props) {
       const { data } = await axios.post(
         "/api/ai/generate-project-description",
         {
-          jobTitle: resume.workExperience?.at(-1)?.position || resume.jobTitle || "Software Engineer",
-          experienceLevel: resume.workExperience?.length ? "Experienced" : "Fresher",
-          techStack: project.techStack ? project.techStack.split(",").map((tech: string) => tech.trim()) : [],
+          jobTitle:
+            resume.workExperience?.at(-1)?.position ||
+            resume.jobTitle ||
+            "Software Engineer",
+          experienceLevel: resume.workExperience?.length
+            ? "Experienced"
+            : "Fresher",
+          techStack: project.techStack
+            ? project.techStack.split(",").map((tech: string) => tech.trim())
+            : [],
         },
       );
       console.log("data we get from project description", data);
@@ -213,7 +220,9 @@ export default function ProjectsStep({ resumeId, onNext, onBack }: Props) {
                       className="flex items-center gap-2 bg-violet-100 text-violet-700 px-4 py-2 rounded-xl disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       <Sparkles size={18} />
-                      {generatingIndex === index ? "Generating..." : "Generate Description"}
+                      {generatingIndex === index
+                        ? "Generating..."
+                        : "Generate Description"}
                     </button>
                   </div>
 
